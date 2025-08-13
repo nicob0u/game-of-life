@@ -1,15 +1,18 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 public class GameOfLife : MonoBehaviour
 {
 
     bool[,] grid;
-    int gridSize = 4;
+    int gridSize = 10;
     string gridString = "";
     string currentGridString;
     string nextGridString;
 
+    float timeSinceLastUpdate = 0;
+    float updateInterval = 0.5f;
 
     Vector2Int aliveCell;
     Vector2Int deadCell;
@@ -17,21 +20,25 @@ public class GameOfLife : MonoBehaviour
     void Start()
     {
         grid = new bool[gridSize, gridSize];
-        GenerateGrid();
-        UpdateGrid(grid);
+        GenerateGrid(grid);
 
     }
 
     void Update()
     {
 
+        timeSinceLastUpdate += Time.deltaTime;
 
-
+        if (timeSinceLastUpdate >= updateInterval)
+        {
+            UpdateGrid();
+            timeSinceLastUpdate = 0f;
+        }
     }
 
 
 
-    void GenerateGrid()
+    void GenerateGrid(bool[,] grid)
     {
         gridString = "";
 
@@ -41,7 +48,7 @@ public class GameOfLife : MonoBehaviour
             {
 
 
-                if (Random.value < 0.5)
+                if (Random.value < 0.1)
                 {
                     grid[i, j] = true;
                     gridString += "x  ";
@@ -61,13 +68,13 @@ public class GameOfLife : MonoBehaviour
         }
 
         currentGridString = gridString;
-        Debug.Log(currentGridString);
+        UnityEngine.Debug.Log(currentGridString);
 
 
 
     }
 
-    void UpdateGrid(bool[,] grid)
+    void UpdateGrid()
     {
 
 
@@ -78,36 +85,45 @@ public class GameOfLife : MonoBehaviour
         KillCells(grid, nextGrid);
         BirthCells(grid, nextGrid);
 
-        if (grid == nextGrid) return;
-        else
-            grid = nextGrid;
         //new grid generation
+
+        bool isFrameNew = false;
 
         for (int i = 0; i < gridSize; i++)
         {
             for (int j = 0; j < gridSize; j++)
             {
-
-
-                if (grid[i, j])
+                if (grid[i, j] != nextGrid[i, j])
                 {
-                    nextGridString += "x  ";
-                }
-
-                else
-                {
-                    nextGridString += ".  ";
-
+                    isFrameNew = true;
+                    break;
                 }
 
 
             }
-
-            nextGridString += "\n";
         }
 
 
-        Debug.Log(nextGridString);
+        if (isFrameNew == false)
+            return;
+
+        else if (isFrameNew)
+        {
+
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+
+                    grid[i, j] = nextGrid[i, j];
+
+                }
+
+            }
+
+        }
+
+        PrintNewGrid(nextGrid);
 
         //end of new generation test
 
@@ -120,7 +136,7 @@ public class GameOfLife : MonoBehaviour
     {
         List<Vector2Int> aliveCells = new List<Vector2Int>();
 
-
+        if (grid == null) return;
 
         for (int x = 0; x < gridSize; x++)
         {
@@ -168,11 +184,11 @@ public class GameOfLife : MonoBehaviour
             if (count < 2 || count > 3)
             {
                 nextGrid[aliveCell.x, aliveCell.y] = false;
-                Debug.Log($"Cell at  [{aliveCell.x},{aliveCell.y}] has been killed.");
+                UnityEngine.Debug.Log($"Cell at  [{aliveCell.x},{aliveCell.y}] has been killed.");
             }
             else if (count == 2 || count == 3)
             {
-                continue;
+                nextGrid[aliveCell.x, aliveCell.y] = true;
             }
 
 
@@ -230,7 +246,7 @@ public class GameOfLife : MonoBehaviour
             if (count == 3)
             {
                 nextGrid[deadCell.x, deadCell.y] = true;
-                Debug.Log($"Cell at  [{deadCell.x},{deadCell.y}] has been birthed.");
+                UnityEngine.Debug.Log($"Cell at  [{deadCell.x},{deadCell.y}] has been birthed.");
             }
 
 
@@ -239,6 +255,36 @@ public class GameOfLife : MonoBehaviour
         }
 
 
-
     }
+
+    void PrintNewGrid(bool[,] grid)
+
+    {
+
+        for (int i = 0; i < gridSize; i++)
+        {
+            for (int j = 0; j < gridSize; j++)
+            {
+
+
+                if (grid[i, j])
+                {
+                    nextGridString += "x  ";
+                }
+
+                else
+                {
+                    nextGridString += ".  ";
+
+                }
+
+
+            }
+
+            nextGridString += "\n";
+        }
+
+        UnityEngine.Debug.Log(nextGridString);
+    }
+
 }
