@@ -1,21 +1,28 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System;
 
 public class GameOfLife : MonoBehaviour
 {
 
-    bool[,] grid;
-    int gridSize = 10;
+    public bool[,] grid;
+    public int gridSize = 100;
     string gridString = "";
     string currentGridString;
     string nextGridString;
 
     float timeSinceLastUpdate = 0;
-    float updateInterval = 0.5f;
+    float updateInterval = 0.05f;
 
     Vector2Int aliveCell;
     Vector2Int deadCell;
+
+    public List<Vector2Int> aliveCells;
+    public List<Vector2Int> deadCells;
+
+    public event Action onGridInitialized;
+    public event Action onGridUpdated;
 
     void Start()
     {
@@ -40,6 +47,10 @@ public class GameOfLife : MonoBehaviour
 
     void GenerateGrid(bool[,] grid)
     {
+         deadCells = new List<Vector2Int>();
+        aliveCells = new List<Vector2Int>();
+
+
         gridString = "";
 
         for (int i = 0; i < gridSize; i++)
@@ -48,16 +59,21 @@ public class GameOfLife : MonoBehaviour
             {
 
 
-                if (Random.value < 0.1)
+                if (UnityEngine.Random.value < 0.08f)
                 {
                     grid[i, j] = true;
                     gridString += "x  ";
+                    aliveCell = new Vector2Int(i, j);
+                    aliveCells.Add(aliveCell);
                 }
 
                 else
                 {
                     grid[i, j] = false;
                     gridString += ".  ";
+                    deadCell = new Vector2Int(i, j);
+                    deadCells.Add(deadCell);
+
 
                 }
 
@@ -70,7 +86,7 @@ public class GameOfLife : MonoBehaviour
         currentGridString = gridString;
         UnityEngine.Debug.Log(currentGridString);
 
-
+        onGridInitialized?.Invoke();
 
     }
 
@@ -126,7 +142,7 @@ public class GameOfLife : MonoBehaviour
         PrintNewGrid(nextGrid);
 
         //end of new generation test
-
+        onGridUpdated?.Invoke();
 
 
     }
@@ -134,7 +150,8 @@ public class GameOfLife : MonoBehaviour
 
     void KillCells(bool[,] grid, bool[,] nextGrid)
     {
-        List<Vector2Int> aliveCells = new List<Vector2Int>();
+        aliveCells = new List<Vector2Int>();
+
 
         if (grid == null) return;
 
@@ -144,9 +161,9 @@ public class GameOfLife : MonoBehaviour
             {
                 if (grid[x, y])
                 {
+
                     aliveCell = new Vector2Int(x, y);
                     aliveCells.Add(aliveCell);
-
                 }
             }
 
@@ -197,7 +214,8 @@ public class GameOfLife : MonoBehaviour
 
     void BirthCells(bool[,] grid, bool[,] nextGrid)
     {
-        List<Vector2Int> deadCells = new List<Vector2Int>();
+
+        deadCells = new List<Vector2Int>();
 
 
         for (int x = 0; x < gridSize; x++)
